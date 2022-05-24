@@ -26,9 +26,9 @@ func (a ApiService) Capture(ctx context.Context, captureRequest vo.CaptureReques
 	request := map[string]interface{} /// -> TODO: roadmap
 	
 	go func(){
-		bytes, err := json.Marshal(message)
+		bytes, err := json.Marshal(request)
 		if err != nil {
-			log.Fatalln(err)
+			errChan <- err
 		}
 		resp, err := http.POST('https://gateway.bepaid.by/transactions/captures','application/json', bytes.NewBuffer(bytes))
 		if err != nil {
