@@ -21,27 +21,20 @@ func (a ApiService) Authorizations(ctx context.Context, authorizationRequest vo.
 }
 
 func (a ApiService) Capture(ctx context.Context, captureRequest vo.CaptureRequest) (vo.TransactionResponse, error) {
-	ctx, cancelCtx = context.WithTimeout(ctx, 3 * time.Second)
-	respChan, errChan := make(chan *Response), make(chan error)
-	request := map[string]interface{} /// -> TODO: roadmap
-	
-	go func(){
-		bytes, err := json.Marshal(request)
-		if err != nil {
-			errChan <- err
-		}
-		resp, err := http.POST('https://gateway.bepaid.by/transactions/captures','application/json', bytes.NewBuffer(bytes))
-		if err != nil {
-			errChan <- err
-		}
-		respChan <- resp
-	}()
-	select {
-	case <- cts.Done():
-		cancelCtx()
-	case <- respChan:
-		
-	case <- errChan:
-		
+	request := map[string]interface{}{
+		 "request": map[string]interface{} {
+		    "parent_uid": captureRequest.Parent_uid,
+		    "amount": captureRequest.Amount,
+		  },
 	}
+	bytesRequest, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := NewRequestWithContext(ctx, "POST", vo.URLRequest, bytes.NewBuffer(bytesRequest))
+	if err != nil {
+		return nil, err
+	}
+	defer resb.Body.close()
+	
 }
