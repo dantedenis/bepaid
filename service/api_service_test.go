@@ -16,7 +16,7 @@ func TestApiService_Authorizations(t *testing.T) {
 	defer ctrl.Finish()
 
 	api := testdata.NewMockApi(ctrl)
-	api.EXPECT().Authorization(context.Background(), vo.NewAuthorizationRequest()).Return(http.Response{StatusCode: 200})
+	api.EXPECT().Authorizations(context.Background(), vo.NewAuthorizationRequest()).Return(http.Response{StatusCode: 200})
 
 	//service := NewApiService(api)
 	//response, error := service.Authorizations(context.Background(), vo.AuthorizationRequest{})
