@@ -3,7 +3,12 @@ package service
 import (
 	"bepaid-sdk/api/contracts"
 	"bepaid-sdk/service/vo"
+	"bytes"
 	"context"
+	"encoding/json"
+	"io"
+	"log"
+	"net/http"
 )
 
 type ApiService struct {
@@ -22,19 +27,29 @@ func (a ApiService) Authorizations(ctx context.Context, authorizationRequest vo.
 
 func (a ApiService) Capture(ctx context.Context, captureRequest vo.CaptureRequest) (vo.TransactionResponse, error) {
 	request := map[string]interface{}{
-		 "request": map[string]interface{} {
-		    "parent_uid": captureRequest.Parent_uid,
-		    "amount": captureRequest.Amount,
-		  },
+		"request": map[string]interface{}{
+			"parent_uid": captureRequest.ParentUid,
+			"amount":     captureRequest.Amount,
+		},
 	}
 	bytesRequest, err := json.Marshal(request)
 	if err != nil {
-		return nil, err
+		return vo.TransactionResponse{}, err
 	}
-	resp, err := NewRequestWithContext(ctx, "POST", vo.URLRequest, bytes.NewBuffer(bytesRequest))
+	resp, err := http.NewRequestWithContext(ctx, "POST", vo.URLRequest, bytes.NewBuffer(bytesRequest))
 	if err != nil {
-		return nil, err
+		return vo.TransactionResponse{}, err
 	}
-	defer resb.Body.close()
-	
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}(resp.Body)
+	var result vo.TransactionResponse
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	if err != nil {
+		return vo.TransactionResponse{}, err
+	}
+	return result, nil
 }

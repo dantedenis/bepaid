@@ -21,3 +21,8 @@ func TestApiService_Authorizations(t *testing.T) {
 	//service := NewApiService(api)
 	//response, error := service.Authorizations(context.Background(), vo.AuthorizationRequest{})
 }
+
+func TestApiService_Capture(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+}
