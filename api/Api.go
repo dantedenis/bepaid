@@ -11,38 +11,32 @@ import (
 )
 
 const (
+	payments       = "payments"
 	authorizations = "authorizations"
 	captures       = "captures"
+	voids          = "voids"
+	refunds        = "refunds"
 )
 
-type Endpoints map[string]string
-
-var DefaultEndpoints = map[string]string{
-	authorizations: authorizations,
-	captures:       captures,
-}
-
 type Api struct {
-	client    *http.Client
-	endpoints Endpoints
-	baseUrl   string
-	auth      string
+	client  *http.Client
+	baseUrl string
+	auth    string
 }
 
-func NewApi(client *http.Client, endPoints Endpoints, baseUrl, username, password string) *Api {
+func NewApi(client *http.Client, baseUrl, username, password string) *Api {
 	return &Api{
-		client:    client,
-		endpoints: endPoints,
-		baseUrl:   baseUrl,
-		auth:      base64.StdEncoding.EncodeToString([]byte(username + ":" + password))}
+		client:  client,
+		baseUrl: baseUrl,
+		auth:    base64.StdEncoding.EncodeToString([]byte(username + ":" + password))}
 }
 
 func (a *Api) Authorizations(ctx context.Context, request *vo.AuthorizationRequest) (*http.Response, error) {
-	return a.sendRequest(ctx, http.MethodPost, a.endpoints[authorizations], &request)
+	return a.sendRequest(ctx, http.MethodPost, authorizations, &request)
 }
 
 func (a *Api) Captures(ctx context.Context, request *vo.CaptureRequest) (*http.Response, error) {
-	return a.sendRequest(ctx, http.MethodPost, a.endpoints[captures], &request)
+	return a.sendRequest(ctx, http.MethodPost, captures, &request)
 }
 
 func (a *Api) sendRequest(ctx context.Context, method, path string, request interface{}) (*http.Response, error) {
@@ -61,8 +55,9 @@ func (a *Api) sendRequest(ctx context.Context, method, path string, request inte
 	if method == http.MethodPost {
 		//r.Header.Set("Content-Type", "application/json; charset=UTF-8")
 		r.Header.Set("Content-Type", "application/json")
-		r.Header.Set("Accept", "application/json")
 	}
+
+	r.Header.Set("Accept", "application/json")
 
 	return a.client.Do(r)
 }
