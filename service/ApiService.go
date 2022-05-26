@@ -3,12 +3,10 @@ package service
 import (
 	"bepaid-sdk/api/contracts"
 	"bepaid-sdk/service/vo"
-	"bytes"
 	"context"
 	"encoding/json"
 	"io"
 	"log"
-	"net/http"
 )
 
 type ApiService struct {
@@ -26,17 +24,7 @@ func (a ApiService) Authorizations(ctx context.Context, authorizationRequest vo.
 }
 
 func (a ApiService) Capture(ctx context.Context, captureRequest vo.CaptureRequest) (vo.TransactionResponse, error) {
-	request := map[string]interface{}{
-		"request": map[string]interface{}{
-			"parent_uid": captureRequest.ParentUid,
-			"amount":     captureRequest.Amount,
-		},
-	}
-	bytesRequest, err := json.Marshal(request)
-	if err != nil {
-		return vo.TransactionResponse{}, err
-	}
-	resp, err := http.NewRequestWithContext(ctx, "POST", vo.URLRequest, bytes.NewBuffer(bytesRequest))
+	resp, err := a.api.Capture(ctx, captureRequest)
 	if err != nil {
 		return vo.TransactionResponse{}, err
 	}

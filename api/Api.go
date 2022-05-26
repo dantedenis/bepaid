@@ -28,3 +28,7 @@ func (a Api) Capture(ctx context.Context, capture vo.CaptureRequest) (http.Respo
 	//TODO implement me
 	panic("implement me")
 }
+
+func (a Api) GetUrl() string {
+	return a.baseUrl
+}

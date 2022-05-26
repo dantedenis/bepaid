@@ -1,9 +1,5 @@
 package vo
 
-const (
-	URLRequest = "https://gateway.bepaid.by/transactions/captures"
-)
-
 type CaptureRequest struct {
 	Amount    int    `json:"amount"`
 	ParentUid string `json:"parent_uid"`
