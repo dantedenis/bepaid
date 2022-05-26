@@ -15,7 +15,7 @@ func NewApiService(api contracts.Api) *ApiService {
 	return &ApiService{api: api}
 }
 
-func (c *ApiService) Authorizations(ctx context.Context, authorizationRequest *vo.AuthorizationRequest) (*vo.TransactionResponse, error) {
+func (c *ApiService) Authorizations(ctx context.Context, authorizationRequest vo.AuthorizationRequest) (*vo.TransactionResponse, error) {
 	resp, err := c.api.Authorizations(ctx, authorizationRequest)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (c *ApiService) Authorizations(ctx context.Context, authorizationRequest *v
 	return &tr, err
 }
 
-func (c *ApiService) Capture(ctx context.Context, captureRequest *vo.CaptureRequest) (*vo.TransactionResponse, error) {
+func (c *ApiService) Capture(ctx context.Context, captureRequest vo.CaptureRequest) (*vo.TransactionResponse, error) {
 	resp, err := c.api.Captures(ctx, captureRequest)
 	if err != nil {
 		return nil, err

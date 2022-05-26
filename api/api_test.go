@@ -14,7 +14,7 @@ var ch = make(chan io.ReadCloser, 1)
 
 type customRoundTripper struct{}
 
-func (c customRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
+func (customRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
 	ch <- request.Body
 	return nil, nil
 }
@@ -39,8 +39,8 @@ func TestApi_AuthorizationsMarshalRequest(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// ignore response nad err
-			go api.Authorizations(context.TODO(), &tc.data)
+			// ignore response and err
+			go api.Authorizations(context.TODO(), tc.data)
 
 			body := <-ch
 			defer body.Close()
@@ -48,7 +48,7 @@ func TestApi_AuthorizationsMarshalRequest(t *testing.T) {
 			b, err := io.ReadAll(body)
 
 			if err != nil {
-				t.Fatalf("ReadAll retrun not nil value: \nER: %v,\n AR: %v", nil, err)
+				t.Fatalf("ReadAll returned not nil value: \nER: %v,\n AR: %v", nil, err)
 			}
 
 			if string(b) != tc.er {

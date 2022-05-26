@@ -28,14 +28,14 @@ func NewApi(client *http.Client, baseUrl, username, password string) *Api {
 	return &Api{
 		client:  client,
 		baseUrl: baseUrl,
-		auth:    base64.StdEncoding.EncodeToString([]byte(username + ":" + password))}
+		auth:    "Basic " + base64.StdEncoding.EncodeToString([]byte(username+":"+password))}
 }
 
-func (a *Api) Authorizations(ctx context.Context, request *vo.AuthorizationRequest) (*http.Response, error) {
+func (a *Api) Authorizations(ctx context.Context, request vo.AuthorizationRequest) (*http.Response, error) {
 	return a.sendRequest(ctx, http.MethodPost, authorizations, &request)
 }
 
-func (a *Api) Captures(ctx context.Context, request *vo.CaptureRequest) (*http.Response, error) {
+func (a *Api) Captures(ctx context.Context, request vo.CaptureRequest) (*http.Response, error) {
 	return a.sendRequest(ctx, http.MethodPost, captures, &request)
 }
 
@@ -50,14 +50,14 @@ func (a *Api) sendRequest(ctx context.Context, method, path string, request inte
 	if err != nil {
 		return nil, err
 	}
-	r.Header.Set("Authorization", "Basic "+a.auth)
+
+	r.Header.Set("Authorization", a.auth)
+	r.Header.Set("Accept", "application/json")
 
 	if method == http.MethodPost {
 		//r.Header.Set("Content-Type", "application/json; charset=UTF-8")
 		r.Header.Set("Content-Type", "application/json")
 	}
-
-	r.Header.Set("Accept", "application/json")
 
 	return a.client.Do(r)
 }
