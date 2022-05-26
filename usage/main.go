@@ -16,7 +16,7 @@ func main() {
 	shopId := ""
 	secret := ""
 
-	api1 := api.NewApi(http.DefaultClient, api.DefaultEndpoints, baseURL, shopId, secret)
+	api1 := api.NewApi(http.DefaultClient, baseURL, shopId, secret)
 
 	service1 := service.NewApiService(api1)
 
