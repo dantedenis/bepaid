@@ -2,15 +2,16 @@ package vo
 
 type AuthorizationRequest struct {
 	Request struct {
+
 		//стоимость в минимальных денежных единицах.
 		//Например, $32.45 должна быть отправлена как 3245
-		Amount int `json:"amount"`
+		Amount int64 `json:"amount"`
 
 		//валюта в ISO-4217 формате, например USD
 		Currency string `json:"currency"`
 
 		//описание заказа. Максимальная длина: 255 символов
-		Description string `json:"description,omitempty"`
+		Description string `json:"description"`
 
 		//id транзакции или заказа в вашей системе.
 		//Максимальная длина: 255 символов.
@@ -32,24 +33,21 @@ type AuthorizationRequest struct {
 		AdditionalData map[string]interface{} `json:"additional_data,omitempty"`
 
 		Customer *Customer `json:"customer,omitempty"`
-
-		//(необязательный) узнайте у службы поддержки, должны ли вы отправлять эти данные
-		//BillingAddress *BillingAddress `json:"billing_address,omitempty"`
 	} `json:"request"`
 }
 
-func NewAuthorizationRequest() *AuthorizationRequest {
-	return &AuthorizationRequest{}
-}
+// NewAuthorizationRequest creates AuthorizationRequest with mandatory fields
+func NewAuthorizationRequest(amount int64, currency, description, trackingId string, test bool, cc CreditCard) *AuthorizationRequest {
 
-// NewAuthorizationRequestWith creates AuthorizationRequest with mandatory fields
-func NewAuthorizationRequestWith(amount int, currency string, description string, cc CreditCard) *AuthorizationRequest {
-	return &AuthorizationRequest{}
-}
+	r := &AuthorizationRequest{}
+	r.Request.Amount = amount
+	r.Request.Currency = currency
+	r.Request.Description = description
+	r.Request.TrackingId = trackingId
+	r.Request.Test = test
+	r.Request.CreditCard = cc
 
-func (a *AuthorizationRequest) WithTrackingId(trackingId string) *AuthorizationRequest {
-	a.Request.TrackingId = trackingId
-	return a
+	return r
 }
 
 func (a *AuthorizationRequest) WithReturnUrl(returnUrl string) *AuthorizationRequest {
@@ -57,17 +55,15 @@ func (a *AuthorizationRequest) WithReturnUrl(returnUrl string) *AuthorizationReq
 	return a
 }
 
-func (a *AuthorizationRequest) WithTest(test bool) *AuthorizationRequest {
-	a.Request.Test = test
-	return a
-}
-
+// WithAdditionalData saves argument to AuthorizationRequest.Request.AdditionalData field.
+//
+// Don't change content of additionalData after function call.
 func (a *AuthorizationRequest) WithAdditionalData(additionalData map[string]interface{}) *AuthorizationRequest {
 	a.Request.AdditionalData = additionalData
 	return a
 }
 
 func (a *AuthorizationRequest) WithCustomer(customer Customer) *AuthorizationRequest {
-	*a.Request.Customer = customer
+	a.Request.Customer = &customer
 	return a
 }

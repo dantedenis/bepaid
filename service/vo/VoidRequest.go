@@ -1,6 +1,6 @@
 package vo
 
-type CaptureRequest struct {
+type VoidRequest struct {
 	Request struct {
 
 		//UID транзакции авторизации
@@ -16,10 +16,9 @@ type CaptureRequest struct {
 	} `json:"request"`
 }
 
-// NewCaptureRequest creates CaptureRequest with mandatory fields
-
-func NewCaptureRequest(parentUid string, amount int64) *CaptureRequest {
-	r := &CaptureRequest{}
+// NewVoidRequest creates VoidRequest with mandatory fields
+func NewVoidRequest(parentUid string, amount int64) *VoidRequest {
+	r := &VoidRequest{}
 
 	r.Request.ParentUid = parentUid
 	r.Request.Amount = amount
@@ -27,7 +26,7 @@ func NewCaptureRequest(parentUid string, amount int64) *CaptureRequest {
 	return r
 }
 
-func (cr *CaptureRequest) WithDuplicateCheck(duplicateCheck bool) *CaptureRequest {
+func (cr *VoidRequest) WithDuplicateCheck(duplicateCheck bool) *VoidRequest {
 	cr.Request.DuplicateCheck = &duplicateCheck
 	return cr
 }
