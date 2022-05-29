@@ -67,3 +67,7 @@ func (a *AuthorizationRequest) WithCustomer(customer Customer) *AuthorizationReq
 	a.Request.Customer = &customer
 	return a
 }
+
+func (a *AuthorizationRequest) SetTest(test bool) {
+	a.Request.Test = test
+}
