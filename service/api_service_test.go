@@ -4,7 +4,6 @@ import (
 	"bepaid-sdk/service/vo"
 	"bepaid-sdk/testdata"
 	"context"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
 
@@ -27,11 +26,15 @@ func TestApiService_Capture(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	capture := testdata.NewMockApiService(ctrl)
-	capture.EXPECT().Capture(context.Background(), vo.NewCaptureRequest(50, "1-310b0da80b")).Return(vo.TransactionResponse{})
+	capture := testdata.NewMockApi(ctrl)
+	capture.EXPECT().Capture(context.Background(), vo.NewCaptureRequest(50, "1-310b0da80b")).Return(http.Response{StatusCode: 200, Body: ""})
 
-	captureTest := NewApiService(ctrl)
-	response, err := captureTest.Capture(context.Background(), vo.CaptureRequest{})
-	assert.Nil(t, err)
-	assert.Equal(t, response.Transaction, vo.TransactionResponse{})
+	captureTest := NewApiService(capture)
+	//todo проверка результатов
+	response, err := captureTest.Capture(context.Background(), *vo.NewCaptureRequest(50, "1-310b0da80b"))
+
+	if err != nil {
+		t.Error(err)
+	}
+
 }
