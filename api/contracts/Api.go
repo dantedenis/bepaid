@@ -8,9 +8,12 @@ import (
 
 //go:generate mockgen -source=Api.go -destination=../../testdata/ApiMock.go -package=testdata
 type Api interface {
-	Payments(ctx context.Context, payment vo.PaymentRequest) (*http.Response, error)
-	Authorizations(ctx context.Context, authorization vo.AuthorizationRequest) (*http.Response, error)
-	Captures(ctx context.Context, capture vo.CaptureRequest) (*http.Response, error)
-	Voids(ctx context.Context, void vo.VoidRequest) (*http.Response, error)
-	Refunds(ctx context.Context, refund vo.RefundRequest) (*http.Response, error)
+	Payment(ctx context.Context, payment vo.PaymentRequest) (*http.Response, error)
+	Authorization(ctx context.Context, authorization vo.AuthorizationRequest) (*http.Response, error)
+	Capture(ctx context.Context, capture vo.CaptureRequest) (*http.Response, error)
+	Void(ctx context.Context, void vo.VoidRequest) (*http.Response, error)
+	Refund(ctx context.Context, refund vo.RefundRequest) (*http.Response, error)
+
+	StatusByUid(ctx context.Context, uid string) (*http.Response, error)
+	StatusByTrackingId(ctx context.Context, trackingId string) (*http.Response, error)
 }

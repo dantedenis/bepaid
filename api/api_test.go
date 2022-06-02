@@ -2,10 +2,14 @@ package api
 
 import (
 	"bepaid-sdk/service/vo"
+	"bytes"
 	"context"
+	"encoding/json"
 	"io"
+	"math/rand"
 	"net/http"
 	"testing"
+	"time"
 )
 
 type P = vo.PaymentRequest
@@ -23,6 +27,9 @@ var (
 
 	// Default Api used by all tests.
 	api = Api{client: testingClient}
+
+	// TODO remove secrets
+	api2 = NewApi(http.DefaultClient, "https://gateway.bepaid.by", "", "")
 )
 
 type customRoundTripper struct{}
@@ -49,7 +56,7 @@ func TestApi_PaymentsMarshalRequest(t *testing.T) {
 				t,
 				tc.er,
 				func() (*http.Response, error) {
-					return api.Payments(context.TODO(), tc.req)
+					return api.Payment(context.TODO(), tc.req)
 				})
 		})
 	}
@@ -72,7 +79,7 @@ func TestApi_AuthorizationsMarshalRequest(t *testing.T) {
 				t,
 				tc.er,
 				func() (*http.Response, error) {
-					return api.Authorizations(context.TODO(), tc.req)
+					return api.Authorization(context.TODO(), tc.req)
 				})
 		})
 	}
@@ -95,7 +102,7 @@ func TestApi_CapturesMarshalRequest(t *testing.T) {
 				t,
 				tc.er,
 				func() (*http.Response, error) {
-					return api.Captures(context.TODO(), tc.req)
+					return api.Capture(context.TODO(), tc.req)
 				})
 		})
 	}
@@ -118,7 +125,7 @@ func TestApi_VoidsMarshalRequest(t *testing.T) {
 				t,
 				tc.er,
 				func() (*http.Response, error) {
-					return api.Voids(context.TODO(), tc.req)
+					return api.Void(context.TODO(), tc.req)
 				})
 		})
 	}
@@ -141,13 +148,228 @@ func TestApi_RefundsMarshalRequest(t *testing.T) {
 				t,
 				tc.er,
 				func() (*http.Response, error) {
-					return api.Refunds(context.TODO(), tc.req)
+					return api.Refund(context.TODO(), tc.req)
 				})
 		})
 	}
 }
 
-//---------MarshalRequest---------
+func TestApi_Payment(t *testing.T) {
+	cc := vo.NewCreditCard("4200000000000000", "123", "tim", "01", "2024")
+	r := vo.NewPaymentRequest(int64(100), "RUB", "it's description", "mytrackingid", true, *cc).WithDuplicateCheck(false)
+
+	resp, err := api2.Payment(context.Background(), *r)
+	if err != nil {
+		t.Fatalf("err is not nil: %v", err)
+	}
+
+	defer resp.Body.Close()
+
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("err is not nil: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Logf("resp.Body: %s", string(b))
+		t.Fatalf("unexpected status code: %v", resp.StatusCode)
+	}
+	if len(b) == 0 {
+		t.Fatal("Response body length == 0")
+	}
+
+	t.Logf("resp.Body: %s", string(b))
+}
+
+func TestApi_Authorization(t *testing.T) {
+	cc := vo.NewCreditCard("4200000000000000", "123", "tim", "01", "2024")
+	r := vo.NewAuthorizationRequest(int64(100), "RUB", "it's description", "mytrackingid", true, *cc).WithDuplicateCheck(false)
+
+	resp, err := api2.Authorization(context.Background(), *r)
+	if err != nil {
+		t.Fatalf("err is not nil: %v", err)
+	}
+
+	defer resp.Body.Close()
+
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("err is not nil: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Logf("resp.Body:\n%s", string(b))
+		t.Fatalf("unexpected status code: %v", resp.StatusCode)
+	}
+	if len(b) == 0 {
+		t.Fatal("Response body length == 0")
+	}
+
+	t.Logf("resp.Body:\n%s", string(b))
+
+}
+
+func TestApi_AuthorizationCapture(t *testing.T) {
+	amount := rand.New(rand.NewSource(time.Now().Unix())).Int63() % 100
+
+	cc := vo.NewCreditCard("4200000000000000", "123", "tim", "01", "2024")
+	r := vo.NewAuthorizationRequest(amount, "RUB", "it's description", "mytrackingid", true, *cc)
+
+	resp, err := api2.Authorization(context.Background(), *r)
+	if err != nil {
+		t.Fatalf("err is not nil: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status code: %v", resp.StatusCode)
+	}
+
+	defer resp.Body.Close()
+
+	buf := bytes.Buffer{}
+	teeReader := io.TeeReader(resp.Body, &buf)
+	uid := getUid(t, teeReader)
+
+	cr := vo.NewCaptureRequest(uid, amount)
+
+	resp, err = api2.Capture(context.Background(), *cr)
+	if err != nil {
+		t.Fatalf("err is not nil: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status code: %v", resp.StatusCode)
+	}
+
+	defer resp.Body.Close()
+
+	buf = bytes.Buffer{}
+	teeReader = io.TeeReader(resp.Body, &buf)
+	uid = getUid(t, teeReader)
+}
+
+func TestApi_AuthorizationVoid(t *testing.T) {
+	amount := rand.New(rand.NewSource(time.Now().Unix())).Int63() % 100
+
+	cc := vo.NewCreditCard("4200000000000000", "123", "tim", "01", "2024")
+	r := vo.NewAuthorizationRequest(amount, "RUB", "it's description", "mytrackingid", true, *cc)
+
+	resp, err := api2.Authorization(context.Background(), *r)
+	if err != nil {
+		t.Fatalf("err is not nil: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status code: %v", resp.StatusCode)
+	}
+
+	defer resp.Body.Close()
+
+	buf := bytes.Buffer{}
+	teeReader := io.TeeReader(resp.Body, &buf)
+	uid := getUid(t, teeReader)
+
+	vr := vo.NewVoidRequest(uid, amount)
+
+	resp, err = api2.Void(context.Background(), *vr)
+	if err != nil {
+		t.Fatalf("err is not nil: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status code: %v", resp.StatusCode)
+	}
+
+	defer resp.Body.Close()
+
+	buf = bytes.Buffer{}
+	teeReader = io.TeeReader(resp.Body, &buf)
+	uid = getUid(t, teeReader)
+}
+
+func TestApi_AuthorizationCaptureRefund(t *testing.T) {
+	amount := rand.New(rand.NewSource(time.Now().Unix())).Int63() % 100
+
+	cc := vo.NewCreditCard("4200000000000000", "123", "tim", "01", "2024")
+	r := vo.NewAuthorizationRequest(amount, "RUB", "it's description", "mytrackingid", true, *cc)
+
+	resp, err := api2.Authorization(context.Background(), *r)
+	if err != nil {
+		t.Fatalf("err is not nil: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status code: %v", resp.StatusCode)
+	}
+
+	defer resp.Body.Close()
+
+	buf := bytes.Buffer{}
+	teeReader := io.TeeReader(resp.Body, &buf)
+	uid := getUid(t, teeReader)
+
+	cr := vo.NewCaptureRequest(uid, amount)
+
+	resp, err = api2.Capture(context.Background(), *cr)
+	if err != nil {
+		t.Fatalf("err is not nil: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status code: %v", resp.StatusCode)
+	}
+
+	defer resp.Body.Close()
+
+	buf = bytes.Buffer{}
+	teeReader = io.TeeReader(resp.Body, &buf)
+	uid = getUid(t, teeReader)
+
+	rr := vo.NewRefundRequest(uid, amount, "need my money back")
+
+	resp, err = api2.Refund(context.Background(), *rr)
+	if err != nil {
+		t.Fatalf("err is not nil: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status code: %v", resp.StatusCode)
+	}
+
+	defer resp.Body.Close()
+
+	buf = bytes.Buffer{}
+	teeReader = io.TeeReader(resp.Body, &buf)
+	uid = getUid(t, teeReader)
+
+}
+
+func TestApi_PaymentRefund(t *testing.T) {
+	r := vo.NewCaptureRequest("151281134-8d2c74c539", int64(100)).WithDuplicateCheck(false)
+
+	resp, err := api2.Capture(context.Background(), *r)
+	if err != nil {
+		t.Fatalf("err is not nil: %v", err)
+	}
+
+	defer resp.Body.Close()
+
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("err is not nil: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Logf("resp.Body:\n%s", string(b))
+		t.Fatalf("unexpected status code: %v", resp.StatusCode)
+	}
+	if len(b) == 0 {
+		t.Fatal("Response body length == 0")
+	}
+
+	t.Logf("resp.Body:\n%s", string(b))
+
+}
 
 func testMarshallRequest(t *testing.T, er string, startRequest func() (*http.Response, error)) {
 	// ignore response and error
@@ -169,4 +391,34 @@ func testMarshallRequest(t *testing.T, er string, startRequest func() (*http.Res
 
 func fatalfWithExpectedActual(t *testing.T, msg string, er, ar interface{}) {
 	t.Fatalf("%s:\nER: %v,\nAR: %v", msg, er, ar)
+}
+
+func getUid(t *testing.T, body io.Reader) string {
+	m := map[string]interface{}{}
+
+	err := json.NewDecoder(body).Decode(&m)
+	if err != nil {
+		t.Fatalf("Decoder.Decode: err is not nil: %v", err)
+	}
+
+	if len(m) == 0 {
+		t.Fatal("Response body length == 0")
+	}
+
+	transactionMap, ok := m["transaction"]
+	if !ok {
+		t.Fatal("No 'transaction' key in map")
+	}
+
+	uid, ok := transactionMap.(map[string]interface{})["uid"]
+	if !ok {
+		t.Fatal("No 'uid' key in transactionMap")
+	}
+
+	uidS, ok := uid.(string)
+	if !ok {
+		t.Fatal("Value in 'uid' key is not a string")
+	}
+
+	return uidS
 }
