@@ -19,6 +19,12 @@ type AuthorizationRequest struct {
 		//В противном случае вы получите первую найденную по tracking_id транзакцию
 		TrackingId string `json:"tracking_id"`
 
+		//(необязательный) true или false.
+		//Параметр управляет процессом проверки входящего запроса на уникальность.
+		//Если в течение 30 секунд придет запрос на авторизацию с одинаковыми amount и number или token, то запрос будет отклонен.
+		//По умолчанию, этот параметр имеет значение true
+		DuplicateCheck *bool `json:"duplicate_check,omitempty"`
+
 		//параметр обязателен, если 3-D Secure включен.
 		//Обратитесь к менеджеру за информацией. return_url - это URL на стороне торговца,
 		//на который bePaid будет перенаправлять клиента после возврата с 3-D Secure проверки
@@ -48,6 +54,11 @@ func NewAuthorizationRequest(amount int64, currency, description, trackingId str
 	r.Request.CreditCard = cc
 
 	return r
+}
+
+func (cr *AuthorizationRequest) WithDuplicateCheck(duplicateCheck bool) *AuthorizationRequest {
+	cr.Request.DuplicateCheck = &duplicateCheck
+	return cr
 }
 
 func (a *AuthorizationRequest) WithReturnUrl(returnUrl string) *AuthorizationRequest {
