@@ -5,6 +5,8 @@ import (
 	"bepaid-sdk/service/vo"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"log"
 )
@@ -41,12 +43,17 @@ func (a ApiService) Capture(ctx context.Context, captureRequest vo.CaptureReques
 	if err != nil {
 		return vo.TransactionResponse{}, err
 	}
+	if resp.StatusCode != 200 {
+		return vo.TransactionResponse{}, errors.New(fmt.Sprintf("Error, status code: %d", resp.StatusCode))
+	}
+
 	defer func(Body io.ReadCloser) {
 		err = Body.Close()
 		if err != nil {
 			log.Fatalln(err)
 		}
 	}(resp.Body)
+
 	var result vo.TransactionResponse
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
