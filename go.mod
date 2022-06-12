@@ -1,4 +1,4 @@
-module bepaid-sdk
+module github.com/dantedenis/bepaid-sdk
 
 go 1.17
 
